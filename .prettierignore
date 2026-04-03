@@ -1,0 +1,15 @@
+# Dependencies & build
+node_modules
+dist
+.angular
+coverage
+out-tsc
+
+# Lockfiles (optional: remove line if you want Prettier to format them)
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Generated / IDE
+*.min.js
+*.min.css

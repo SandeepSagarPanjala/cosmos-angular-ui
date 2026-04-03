@@ -1,0 +1,101 @@
+<div class="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+  <div class="max-w-md w-full relative group">
+    <!-- Decorative glowing orbs with enhanced intensity -->
+    <div class="absolute -top-16 -left-16 w-56 h-56 bg-indigo-600/30 rounded-full mix-blend-screen filter blur-3xl animate-pulse"></div>
+    <div class="absolute -bottom-16 -right-16 w-56 h-56 bg-purple-600/30 rounded-full mix-blend-screen filter blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+    
+    <div class="bg-slate-900/50 backdrop-blur-2xl rounded-3xl shadow-2xl border border-slate-800 p-8 sm:p-10 relative z-10 transition-all duration-500 hover:border-slate-700/50">
+      <div class="text-center mb-10">
+        <h2 class="text-3xl font-extrabold text-white tracking-tight">Identity Verification</h2>
+        <p class="text-indigo-400 mt-2 text-sm font-medium tracking-wide first-letter:uppercase">Access the secure Cosmos observatory</p>
+      </div>
+      
+      @if(error()) {
+        <div class="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl mb-6 text-sm font-medium flex items-center gap-3 animate-bounce-short">
+          <span class="text-lg">🚫</span>
+          {{ error() }}
+        </div>
+      }
+      
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <div>
+          <label class="block text-sm font-semibold text-slate-300 mb-2 cursor-pointer" for="username">Username</label>
+          <input 
+            id="username"
+            type="text" 
+            formControlName="username"
+            [class.border-red-500]="isInvalid('username')"
+            class="block w-full rounded-xl bg-slate-800/50 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white placeholder-slate-600 px-4 py-3.5 transition duration-200 outline-none"
+            placeholder="Authorized User ID"
+          >
+          @if (isInvalid('username')) {
+            <p class="text-[10px] text-red-400 mt-1.5 ml-1 font-medium tracking-wide animate-in fade-in slide-in-from-top-1 duration-200">
+              PHYSICAL ACCESS DENIED: Username required.
+            </p>
+          }
+        </div>
+        
+        <div>
+          <label class="block text-sm font-semibold text-slate-300 mb-2 cursor-pointer" for="password">Password</label>
+          <div class="relative">
+            <input 
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'" 
+              formControlName="password"
+              [class.border-red-500]="isInvalid('password')"
+              class="block w-full rounded-xl bg-slate-800/50 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white placeholder-slate-600 px-4 py-3.5 pr-12 transition duration-200 outline-none"
+              placeholder="••••••••"
+            >
+            <button 
+              type="button" 
+              (click)="showPassword.set(!showPassword())"
+              class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-indigo-400 transition-colors focus:outline-none"
+              aria-label="Toggle password visibility"
+            >
+              @if(showPassword()) {
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268-2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+              } @else {
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              }
+            </button>
+          </div>
+          <div class="flex items-center justify-between mt-2">
+            <div>
+              @if (isInvalid('password')) {
+                <p class="text-[10px] text-red-400 font-medium tracking-wide animate-in fade-in slide-in-from-top-1 duration-200">
+                  PHYSICAL ACCESS DENIED: Password required.
+                </p>
+              }
+            </div>
+            <a href="#" class="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-tight">Recover encryption key?</a>
+          </div>
+        </div>
+        
+        <button 
+          type="submit" 
+          [disabled]="isLoading()"
+          [class.opacity-50]="loginForm.invalid"
+          class="w-full flex justify-center items-center py-4 px-4 rounded-xl text-[13px] font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all duration-300 disabled:cursor-not-allowed group relative overflow-hidden shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] active:scale-[0.98]"
+        >
+          @if(isLoading()) {
+            <span class="mr-2 font-mono tracking-widest animate-pulse">AUTHORIZING SESSION...</span>
+          } @else {
+            <span class="relative z-10 w-full text-center uppercase tracking-widest">Establish Session</span>
+          }
+        </button>
+      </form>
+      
+      <div class="mt-10 pt-8 border-t border-slate-800">
+        <p class="text-center text-xs text-slate-500">
+          Unregistered identity detected? 
+          <a routerLink="/register" class="font-bold text-indigo-400 hover:text-indigo-300 transition-all ml-1 underline decoration-indigo-500/20 underline-offset-4">Register your clearance</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

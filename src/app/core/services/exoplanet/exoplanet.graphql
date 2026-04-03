@@ -1,0 +1,20 @@
+query GetAllExoplanets {
+  exoplanets {
+    id
+    name
+    scientificName
+    imageUrl
+    discoveredOn
+    discoveredBy
+    distanceFromEarthLy
+    solarSystemName
+  }
+}
+
+query GetExoplanetsDashboard {
+  exoplanets {
+    id
+    name
+    imageUrl
+  }
+}

@@ -1,0 +1,119 @@
+<div class="min-h-screen bg-slate-950 flex flex-col justify-center p-4 selection:bg-purple-500/30">
+  <div class="max-w-md w-full mx-auto relative">
+    <!-- Abstract gradient shapes behind the form -->
+    <div
+      class="absolute -top-10 -right-10 w-48 h-48 bg-emerald-500 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-pulse"
+    ></div>
+    <div
+      class="absolute -bottom-10 left-10 w-48 h-48 bg-teal-500 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-pulse"
+      style="animation-delay: 1.5s"
+    ></div>
+
+    <div
+      class="bg-slate-900/60 backdrop-blur-2xl rounded-3xl shadow-2xl border border-slate-800 p-8 sm:p-10 relative z-10"
+    >
+      <div class="mb-10 text-center sm:text-left">
+        <h2 class="text-3xl font-extrabold text-white tracking-tight">Create Account</h2>
+        <p class="text-emerald-400 mt-2 text-sm font-medium tracking-tight first-letter:uppercase">Join the deep-space Cosmos exploratory expedition</p>
+      </div>
+
+      @if (error()) {
+        <div
+          class="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-3 animate-in fade-in zoom-in duration-300"
+        >
+          <span class="text-lg">⚠️</span>
+          {{ error() }}
+        </div>
+      }
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-5">
+        <div>
+          <label
+            for="username"
+            class="block text-sm font-medium text-slate-300 mb-1.5 cursor-pointer"
+            >Choose Username</label
+          >
+          <input
+            id="username"
+            type="text"
+            formControlName="username"
+            [class.border-red-500]="isInvalid('username')"
+            class="block w-full rounded-xl bg-slate-800/80 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white placeholder-slate-500 px-4 py-3.5 transition duration-200 outline-none"
+            placeholder="developer_21"
+          />
+          @if (isInvalid('username')) {
+            <p class="text-[11px] text-red-400 mt-1.5 ml-1 animate-in fade-in slide-in-from-top-1 duration-200">
+              Username must be at least 3 characters.
+            </p>
+          }
+        </div>
+
+        <div>
+          <label for="email" class="block text-sm font-medium text-slate-300 mb-1.5 cursor-pointer"
+            >Email Address</label
+          >
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            [class.border-red-500]="isInvalid('email')"
+            class="block w-full rounded-xl bg-slate-800/80 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white placeholder-slate-500 px-4 py-3.5 transition duration-200 outline-none"
+            placeholder="sandeep@example.com"
+          />
+          @if (isInvalid('email')) {
+            <p class="text-[11px] text-red-400 mt-1.5 ml-1 animate-in fade-in slide-in-from-top-1 duration-200">
+              Provide a valid scientific email address.
+            </p>
+          }
+        </div>
+
+        <div>
+          <label
+            for="password"
+            class="block text-sm font-medium text-slate-300 mb-1.5 cursor-pointer"
+            >Secure Password</label
+          >
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            [class.border-red-500]="isInvalid('password')"
+            class="block w-full rounded-xl bg-slate-800/80 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white placeholder-slate-500 px-4 py-3.5 transition duration-200 outline-none"
+            placeholder="••••••••"
+          />
+          @if (isInvalid('password')) {
+            <p class="text-[11px] text-red-400 mt-1.5 ml-1 animate-in fade-in slide-in-from-top-1 duration-200">
+              Complexity required: at least 6 characters.
+            </p>
+          }
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="isLoading()"
+          [class.opacity-50]="registerForm.invalid"
+          class="w-full relative py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-slate-800 border border-emerald-500 transition-all duration-300 disabled:cursor-not-allowed mt-4 overflow-hidden group shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:bg-emerald-600 active:scale-[0.98]"
+        >
+          @if (isLoading()) {
+            <span class="mr-2 animate-pulse font-mono tracking-tighter">AUTHENTICATING IDENTITY...</span>
+          } @else {
+            <span class="relative z-10 tracking-wide text-emerald-50 group-hover:text-white transition-colors">
+              Deploy Identity
+            </span>
+          }
+        </button>
+      </form>
+
+      <div class="mt-8 text-center text-[10px] sm:text-xs">
+        <p class="text-slate-400 bg-slate-950/50 py-3 rounded-xl border border-slate-800/50">
+          Already engineered your account?
+          <a
+            routerLink="/login"
+            class="font-bold text-emerald-400 hover:text-emerald-300 transition-colors ml-1 underline decoration-emerald-500/30 underline-offset-4"
+            >Log in here</a
+          >
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
