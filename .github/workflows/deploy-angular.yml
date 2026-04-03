@@ -41,7 +41,7 @@ jobs:
           personal_token: ${{ secrets.DEPLOY_PAT_TOKEN }}
           external_repository: SandeepSagarPanjala/SandeepSagarPanjala.github.io
           publish_branch: develop
-          # Note: We still use the full path here because 'uses' steps don't follow 'defaults'
-          publish_dir: ./angular/dist/angular/browser
+          # FIX: Remove the './angular/' part
+          publish_dir: ./dist/angular/browser
           cname: sandeepsagar.work
           force_orphan: true
