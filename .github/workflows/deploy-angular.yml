@@ -3,11 +3,11 @@ run-name: Frontend Deploy by @${{ github.actor }} 🚀
 
 on:
   push:
-    branches: ["develop"]
+    branches: ['develop']
   workflow_dispatch:
 
 concurrency:
-  group: "cross-repo-pages"
+  group: 'cross-repo-pages'
   cancel-in-progress: false
 
 jobs:
@@ -28,8 +28,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Install Frontend Dependencies
         run: pnpm install
