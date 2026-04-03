@@ -1,0 +1,7 @@
+node_modules
+dist
+.angular
+.git
+.pnpm-store
+npm-debug.log
+proxy.conf.json

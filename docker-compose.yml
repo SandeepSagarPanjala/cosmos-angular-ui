@@ -1,0 +1,33 @@
+services:
+  angular-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    command: pnpm exec ng serve --host 0.0.0.0
+    ports:
+      - '4300:4200'
+    volumes:
+      # Mount the current directory (Host -> Container) with 'delegated' for Mac performance
+      - .:/app:delegated
+      # "Black-hole" these heavy folders so they don't bog down Mac->Docker syncing
+      - /app/node_modules
+      - /app/.angular
+      - /app/dist
+      - /app/.git
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - node_modules/
+            - .angular/
+            - dist/
+            - .git/
+    environment:
+      # Using polling for Chokidar-based watchers (if needed by other tools)
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    stdin_open: true
+    tty: true

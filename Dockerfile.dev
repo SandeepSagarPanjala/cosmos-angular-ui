@@ -1,0 +1,11 @@
+# STAGE 1: The Development/Build stage
+FROM node:20-alpine AS development
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN npm install -g pnpm && pnpm install
+COPY . .
+# This stage stays "open" for your compose file to use
+
+# STAGE 2: The Production stage
+FROM nginx:alpine AS production
+COPY --from=development /app/dist/my-app /usr/share/nginx/html
