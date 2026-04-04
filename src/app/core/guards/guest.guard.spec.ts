@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 
 import { guestGuard } from './guest.guard';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../services/auth/auth.service';
 
 describe('guestGuard', () => {
   it('redirects to /dashboard when authenticated', () => {

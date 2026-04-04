@@ -1,72 +1,143 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { of } from 'rxjs';
+import { type MockInstance, vi, type Mock } from 'vitest';
 
 import { AuthService } from './auth.service';
-import { environment } from '../../../environments/environment';
-import { ApiRoutes } from '../constants/api.constants';
+import { environment } from '../../../../environments/environment';
+import {
+  LoginUserGQL,
+  RefreshSessionGQL,
+  LogoutUserGQL,
+  AddUserGQL,
+  LoginUserMutation,
+  AddUserMutation,
+} from './auth.generated';
+
+// Local interface to maintain strictness without elusive imports
+interface MockMutationResult<T> {
+  data?: T | null;
+  loading: boolean;
+}
 
 describe('AuthService', () => {
-  const router = { navigate: vi.fn() };
+  let service: AuthService;
+  let routerMock: Partial<Router>;
+  let loginGQLMock: Partial<LoginUserGQL>;
+  let refreshGQLMock: Partial<RefreshSessionGQL>;
+  let logoutGQLMock: Partial<LogoutUserGQL>;
+  let addUserGQLMock: Partial<AddUserGQL>;
 
   beforeEach(() => {
     localStorage.clear();
-    vi.clearAllMocks();
+
+    routerMock = {
+      navigate: vi.fn() as Mock<Router['navigate']>,
+    };
+
+    loginGQLMock = {
+      mutate: vi.fn() as Mock<LoginUserGQL['mutate']>,
+    };
+    refreshGQLMock = {
+      mutate: vi.fn() as Mock<RefreshSessionGQL['mutate']>,
+    };
+    logoutGQLMock = {
+      mutate: vi.fn() as Mock<LogoutUserGQL['mutate']>,
+    };
+    addUserGQLMock = {
+      mutate: vi.fn() as Mock<AddUserGQL['mutate']>,
+    };
 
     TestBed.configureTestingModule({
       providers: [
         AuthService,
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: Router, useValue: router },
+        { provide: Router, useValue: routerMock },
+        { provide: LoginUserGQL, useValue: loginGQLMock },
+        { provide: RefreshSessionGQL, useValue: refreshGQLMock },
+        { provide: LogoutUserGQL, useValue: logoutGQLMock },
+        { provide: AddUserGQL, useValue: addUserGQLMock },
       ],
     });
+
+    service = TestBed.inject(AuthService);
   });
 
-  it('tracks isAuthenticated based on localStorage', () => {
-    expect(TestBed.inject(AuthService).isAuthenticated()).toBe(false);
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
-    localStorage.setItem(environment.tokenStorageKey, 't1');
-    expect(TestBed.inject(AuthService).getAccessToken()).toBe('t1');
+  it('tracks isAuthenticated based on localStorage', async () => {
+    localStorage.setItem(environment.tokenStorageKey, 'fake_token');
+
+    const newService = TestBed.runInInjectionContext(() => new AuthService());
+
+    expect(newService.getAccessToken()).toBe('fake_token');
+    expect(newService.isAuthenticated()).toBe(true);
   });
 
   it('saveTokens stores token and flips signal true', () => {
-    const service = TestBed.inject(AuthService);
-    service.saveTokens({ accessToken: 'abc' });
-
-    expect(localStorage.getItem(environment.tokenStorageKey)).toBe('abc');
+    service.saveTokens({ accessToken: 'new_token' });
+    expect(localStorage.getItem(environment.tokenStorageKey)).toBe('new_token');
     expect(service.isAuthenticated()).toBe(true);
   });
 
   it('clearTokens removes token and flips signal false', () => {
-    const service = TestBed.inject(AuthService);
-    service.saveTokens({ accessToken: 'abc' });
-
+    service.saveTokens({ accessToken: 'bye' });
     service.clearTokens();
     expect(localStorage.getItem(environment.tokenStorageKey)).toBeNull();
     expect(service.isAuthenticated()).toBe(false);
   });
 
-  it('logout clears tokens and navigates to /login (even when API fails)', () => {
-    const service = TestBed.inject(AuthService);
-    const httpMock = TestBed.inject(HttpTestingController);
+  it('login calls loginGQL and saves tokens on success', () => {
+    const mockRes: MockMutationResult<LoginUserMutation> = {
+      data: {
+        loginUser: {
+          accessToken: 'abc',
+          __typename: 'AuthPayload' as const,
+        },
+      },
+      loading: false,
+    };
 
-    service.saveTokens({ accessToken: 'abc' });
+    (loginGQLMock.mutate as MockInstance).mockReturnValue(of(mockRes));
+
+    service.login({ username: 'u', password: 'p' }).subscribe();
+
+    expect(loginGQLMock.mutate).toHaveBeenCalled();
+    expect(service.isAuthenticated()).toBe(true);
+    expect(localStorage.getItem(environment.tokenStorageKey)).toBe('abc');
+  });
+
+  it('register calls addUserGQL', () => {
+    const mockRes: MockMutationResult<AddUserMutation> = {
+      data: {
+        addUser: {
+          id: '1',
+          username: 'u',
+          __typename: 'User' as const,
+        },
+      },
+      loading: false,
+    };
+
+    (addUserGQLMock.mutate as MockInstance).mockReturnValue(of(mockRes));
+
+    service.register({ username: 'u', password: 'p', email: 'e' }).subscribe();
+
+    expect(addUserGQLMock.mutate).toHaveBeenCalled();
+  });
+
+  it('logout calls logoutGQL and navigates to login', () => {
+    const mockRes: MockMutationResult<boolean> = {
+      loading: false,
+    };
+
+    (logoutGQLMock.mutate as MockInstance).mockReturnValue(of(mockRes));
+
     service.logout();
 
-    const req = httpMock.expectOne(ApiRoutes.Auth.Logout);
-    expect(req.request.withCredentials).toBe(true);
-    req.flush('nope', { status: 500, statusText: 'Server Error' });
-
-    expect(localStorage.getItem(environment.tokenStorageKey)).toBeNull();
+    expect(logoutGQLMock.mutate).toHaveBeenCalled();
     expect(service.isAuthenticated()).toBe(false);
-    expect(router.navigate).toHaveBeenCalledWith(['/login']);
-
-    httpMock.verify();
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/login']);
   });
 });
-

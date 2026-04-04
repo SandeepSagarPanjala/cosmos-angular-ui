@@ -4,7 +4,7 @@ import { of, throwError } from 'rxjs';
 import { type MockInstance } from 'vitest';
 
 import { LoginComponent } from './login.component';
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth/auth.service';
 import { Messages } from '../../../core/constants/messages.constants';
 
 describe('LoginComponent', () => {
@@ -73,7 +73,7 @@ describe('LoginComponent', () => {
     const component = fixture.componentInstance;
 
     // Mock error response - Flattening the structure to match component access
-    loginSpy.mockReturnValue(throwError(() => ({ error: { message: 'Invalid credentials' } })));
+    loginSpy.mockReturnValue(throwError(() => ({ message: 'Invalid credentials' })));
 
     component.loginForm.setValue({ username: 'user1', password: 'bad' });
     component.onSubmit();

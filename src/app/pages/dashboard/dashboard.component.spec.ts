@@ -1,67 +1,79 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { type MockInstance } from 'vitest';
+import { of, throwError } from 'rxjs';
+import { type MockInstance, vi } from 'vitest';
 
 import { DashboardComponent } from './dashboard.component';
-import { ApiRoutes } from '../../core/constants/api.constants';
-import { AuthService } from '../../core/services/auth.service';
+import { ExoplanetService } from '../../core/services/exoplanet/exoplanet.service';
+import { AuthService } from '../../core/services/auth/auth.service';
+import { Exoplanet } from '../../core/graphql/schema.generated';
 
 describe('DashboardComponent', () => {
-  let logoutSpy: MockInstance<AuthService['logout']>;
-  let httpController: HttpTestingController;
+  let getAllExoplanetsSpy: MockInstance<ExoplanetService['getAllExoplanets']>;
 
   beforeEach(() => {
-    const authServiceMock = {
-      logout: vi.fn(),
+    const exoplanetServiceMock: Partial<ExoplanetService> = {
+      getAllExoplanets: vi.fn(),
+    };
+    
+    const authServiceMock: Partial<AuthService> = {
+      isAuthenticated: vi.fn(() => true),
+      logout: vi.fn()
     };
 
     TestBed.configureTestingModule({
       imports: [DashboardComponent],
       providers: [
         provideRouter([]),
-        { provide: AuthService, useValue: authServiceMock },
-        provideHttpClient(),
-        provideHttpClientTesting(),
+        { provide: ExoplanetService, useValue: exoplanetServiceMock },
+        { provide: AuthService, useValue: authServiceMock }
       ],
     });
 
-    // Inject dependencies
-    const authService = TestBed.inject(AuthService);
-    httpController = TestBed.inject(HttpTestingController);
-
-    // Set up spies
-    logoutSpy = vi.spyOn(authService, 'logout');
+    const exoplanetService = TestBed.inject(ExoplanetService);
+    getAllExoplanetsSpy = vi.spyOn(exoplanetService, 'getAllExoplanets') as MockInstance<ExoplanetService['getAllExoplanets']>;
   });
 
   afterEach(() => {
-    // verify() ensures no unmatched/unexpected HTTP requests are outstanding
-    httpController.verify();
     vi.restoreAllMocks();
   });
 
-  it('fires secure API request', () => {
-    const fixture = TestBed.createComponent(DashboardComponent);
+  it('loads exoplanets on initialization', () => {
+    // Matching the REAL schema from schema.generated.ts
+    const mockData: Exoplanet[] = [
+      { 
+        id: '1', 
+        name: 'Kepler-452b', 
+        scientificName: 'Kepler-452b',
+        discoveredOn: '2015-07-23',
+        distanceFromEarthLy: '1402',
+        solarSystemName: 'Kepler-452',
+        imageUrl: 'https://example.com/image.jpg',
+        __typename: 'Exoplanet'
+      }
+    ];
+    
+    getAllExoplanetsSpy.mockReturnValue(of(mockData));
+
+    const fixture: ComponentFixture<DashboardComponent> = TestBed.createComponent(DashboardComponent);
     const component = fixture.componentInstance;
 
-    component.testSecureApi();
+    fixture.detectChanges();
 
-    // expectOne validates that the exact URL was called
-    const req = httpController.expectOne(ApiRoutes.Users.GetAll);
-    expect(req.request.method).toBe('GET');
-
-    // Simulate a successful API response
-    req.flush([{ id: 1 }]);
+    expect(getAllExoplanetsSpy).toHaveBeenCalled();
+    expect(component.exoplanets()).toEqual(mockData);
+    expect(component.loading()).toBe(false);
   });
 
-  it('delegates logout to AuthService', () => {
-    const fixture = TestBed.createComponent(DashboardComponent);
+  it('handles error when data fetch fails', () => {
+    getAllExoplanetsSpy.mockReturnValue(throwError(() => new Error('Array failure')));
+
+    const fixture: ComponentFixture<DashboardComponent> = TestBed.createComponent(DashboardComponent);
     const component = fixture.componentInstance;
 
-    component.logout();
+    fixture.detectChanges();
 
-    // Verify that the component doesn't handle logout itself, but calls the service
-    expect(logoutSpy).toHaveBeenCalled();
+    expect(component.exoplanets()).toEqual([]);
+    expect(component.loading()).toBe(false);
   });
 });

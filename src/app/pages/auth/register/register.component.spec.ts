@@ -1,32 +1,35 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { type MockInstance } from 'vitest'; // Import the type
+import { of, throwError } from 'rxjs';
+import { type MockInstance } from 'vitest';
 
 import { RegisterComponent } from './register.component';
-import { AuthService } from '../../../core/services/auth.service';
-import { ApiRoutes } from '../../../core/constants/api.constants';
+import { AuthService } from '../../../core/services/auth/auth.service';
 import { Messages } from '../../../core/constants/messages.constants';
+import { AddUserMutation } from '../../../core/services/auth/auth.generated';
 
 describe('RegisterComponent', () => {
-  // Use MockInstance to strongly type the spy
   let navigateSpy: MockInstance<Router['navigate']>;
+  let registerSpy: MockInstance<AuthService['register']>;
 
   beforeEach(() => {
+    const authServiceMock = {
+      register: vi.fn(),
+    };
+
     TestBed.configureTestingModule({
       imports: [RegisterComponent],
       providers: [
         provideRouter([]),
-        { provide: AuthService, useValue: {} },
-        provideHttpClient(),
-        provideHttpClientTesting(),
+        { provide: AuthService, useValue: authServiceMock },
       ],
     });
 
     const router = TestBed.inject(Router);
-    // Vitest automatically infers the types here
+    const authService = TestBed.inject(AuthService);
+
     navigateSpy = vi.spyOn(router, 'navigate');
+    registerSpy = vi.spyOn(authService, 'register');
   });
 
   afterEach(() => {
@@ -36,71 +39,65 @@ describe('RegisterComponent', () => {
   it('does nothing when the form is invalid', () => {
     const fixture = TestBed.createComponent(RegisterComponent);
     const component = fixture.componentInstance;
-    const http = TestBed.inject(HttpTestingController);
 
     component.onSubmit();
 
-    http.verify();
+    expect(registerSpy).not.toHaveBeenCalled();
     expect(navigateSpy).not.toHaveBeenCalled();
   });
 
   it('registers and navigates to /login on success', () => {
     const fixture = TestBed.createComponent(RegisterComponent);
     const component = fixture.componentInstance;
-    const http = TestBed.inject(HttpTestingController);
 
-    component.registerForm.setValue({ username: 'developer_21', password: 'pw' });
+    registerSpy.mockReturnValue(of({ id: '1', username: 'dev' } as AddUserMutation['addUser']));
+
+    component.registerForm.setValue({ 
+        username: 'valid_username', 
+        password: 'password123', 
+        email: 'test@example.com' 
+    });
 
     component.onSubmit();
 
-    const req = http.expectOne(ApiRoutes.Users.Add);
-    expect(req.request.method).toBe('POST');
-
-    req.flush({ ok: true });
-
+    expect(registerSpy).toHaveBeenCalled();
     expect(navigateSpy).toHaveBeenCalledWith(['/login']);
-    http.verify();
   });
 
   it('sets error and stops loading when registration fails', () => {
     const fixture = TestBed.createComponent(RegisterComponent);
     const component = fixture.componentInstance;
-    const http = TestBed.inject(HttpTestingController);
 
-    component.registerForm.setValue({ username: 'x', password: 'y' });
+    registerSpy.mockReturnValue(throwError(() => ({ message: 'User already exists' })));
+
+    component.registerForm.setValue({ 
+        username: 'valid_username', 
+        password: 'password123', 
+        email: 'test@example.com' 
+    });
     component.onSubmit();
-
-    const req = http.expectOne(ApiRoutes.Users.Add);
-
-    // FIX: Remove the outer "error" wrapper
-    req.flush(
-      { message: 'User already exists' }, // This is the body (err.error)
-      { status: 400, statusText: 'Bad Request' },
-    );
 
     expect(component.isLoading()).toBe(false);
     expect(component.error()).toBe('User already exists');
     expect(navigateSpy).not.toHaveBeenCalled();
-
-    http.verify();
   });
 
   it('falls back to default message when error has no message', () => {
     const fixture = TestBed.createComponent(RegisterComponent);
     const component = fixture.componentInstance;
-    const http = TestBed.inject(HttpTestingController);
 
-    component.registerForm.setValue({ username: 'x', password: 'y' });
+    registerSpy.mockReturnValue(throwError(() => ({})));
+
+    component.registerForm.setValue({ 
+        username: 'valid_username', 
+        password: 'password123', 
+        email: 'test@example.com' 
+    });
 
     component.onSubmit();
-
-    const req = http.expectOne(ApiRoutes.Users.Add);
-    req.flush({ error: {} }, { status: 400, statusText: 'Bad Request' });
 
     expect(component.isLoading()).toBe(false);
     expect(component.error()).toBe(Messages.Auth.RegistrationFailed);
     expect(navigateSpy).not.toHaveBeenCalled();
-
-    http.verify();
   });
 });

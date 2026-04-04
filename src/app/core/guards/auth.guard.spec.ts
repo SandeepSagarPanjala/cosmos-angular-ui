@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 
 import { authGuard } from './auth.guard';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../services/auth/auth.service';
 
 describe('authGuard', () => {
   it('allows navigation when authenticated', () => {
